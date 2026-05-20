@@ -138,6 +138,7 @@ export class OpenCode implements INodeType {
 
 	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<any> {
 		const credentials = await this.getCredentials('openCodeApi');
+		const baseUrl = (credentials.baseUrl as string)?.replace(/\/+$/, '') || 'https://opencode.ai/zen/go/v1';
 		const modelName = this.getNodeParameter('model', itemIndex) as string;
 		const options = this.getNodeParameter('options', itemIndex, {}) as {
 			temperature?: number;
@@ -155,7 +156,7 @@ export class OpenCode implements INodeType {
 		const modelConfig: any = {
 			apiKey: credentials.apiKey as string,
 			configuration: {
-				baseURL: credentials.baseUrl as string,
+				baseURL: baseUrl,
 			},
 			modelName: modelName,
 			temperature: options.temperature ?? 0.7,
