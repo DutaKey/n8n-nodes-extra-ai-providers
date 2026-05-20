@@ -94,7 +94,7 @@ export class OpenCode implements INodeType {
 		// This prevents heavy initialization at startup
 		const { ChatOpenAI } = await import('@langchain/openai');
 
-		return new ChatOpenAI({
+		const model = new ChatOpenAI({
 			openAIApiKey: credentials.apiKey as string,
 			configuration: {
 				baseURL: credentials.baseUrl as string,
@@ -103,5 +103,9 @@ export class OpenCode implements INodeType {
 			temperature: temperature,
 			maxTokens: maxTokens,
 		});
+
+		return {
+			response: model,
+		};
 	}
 }
