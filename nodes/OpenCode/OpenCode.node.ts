@@ -12,7 +12,10 @@ export class OpenCode implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'OpenCode Chat Model',
 		name: 'openCode',
-		icon: 'file:opencode.svg',
+		icon: {
+			light: 'file:opencode.svg',
+			dark: 'file:opencode-light.svg',
+		},
 		group: ['transform'],
 		version: 1,
 		description: 'OpenCode LangChain Chat Model for Advanced AI Agents',
