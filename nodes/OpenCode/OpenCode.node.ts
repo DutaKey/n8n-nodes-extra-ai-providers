@@ -6,6 +6,7 @@ import {
 	INodePropertyOptions,
 	IRequestOptions,
 } from 'n8n-workflow';
+import { N8nLlmTracing } from '@n8n/ai-utilities';
 
 export class OpenCode implements INodeType {
 	description: INodeTypeDescription = {
@@ -18,7 +19,6 @@ export class OpenCode implements INodeType {
 		defaults: {
 			name: 'OpenCode Chat Model',
 		},
-		// This defines it as a sub-node for LangChain/Advanced AI nodes
 		codex: {
 			categories: ['ai_languageModel'],
 		},
@@ -42,18 +42,67 @@ export class OpenCode implements INodeType {
 				description: 'The model to use for generation (e.g. gpt-4o, or specific OpenCode model ID)',
 			},
 			{
-				displayName: 'Temperature',
-				name: 'temperature',
-				type: 'number',
-				default: 0.7,
-				description: 'Controls randomness. Lower values make the model more deterministic.',
-			},
-			{
-				displayName: 'Max Tokens',
-				name: 'maxTokens',
-				type: 'number',
-				default: 1024,
-				description: 'The maximum number of tokens to generate',
+				displayName: 'Options',
+				name: 'options',
+				placeholder: 'Add Option',
+				description: 'Additional options to configure the model',
+				type: 'collection',
+				default: {},
+				options: [
+					{
+						displayName: 'Sampling Temperature',
+						name: 'temperature',
+						default: 0.7,
+						typeOptions: { maxValue: 2, minValue: 0, numberPrecision: 1 },
+						description: 'Controls randomness. Lower values make the model more deterministic.',
+						type: 'number',
+					},
+					{
+						displayName: 'Maximum Number of Tokens',
+						name: 'maxTokens',
+						default: 1024,
+						description: 'The maximum number of tokens to generate in the completion',
+						type: 'number',
+					},
+					{
+						displayName: 'Frequency Penalty',
+						name: 'frequencyPenalty',
+						default: 0,
+						typeOptions: { maxValue: 2, minValue: -2, numberPrecision: 1 },
+						description: "Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim",
+						type: 'number',
+					},
+					{
+						displayName: 'Presence Penalty',
+						name: 'presencePenalty',
+						default: 0,
+						typeOptions: { maxValue: 2, minValue: -2, numberPrecision: 1 },
+						description: "Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics",
+						type: 'number',
+					},
+					{
+						displayName: 'Top P',
+						name: 'topP',
+						default: 1,
+						typeOptions: { maxValue: 1, minValue: 0, numberPrecision: 1 },
+						description: 'Controls diversity via nucleus sampling. 0.5 means half of all likelihood-weighted options are considered.',
+						type: 'number',
+					},
+					{
+						displayName: 'Max Retries',
+						name: 'maxRetries',
+						default: 2,
+						description: 'Maximum number of retries to attempt for API requests',
+						type: 'number',
+					},
+					{
+						displayName: 'Timeout (ms)',
+						name: 'timeout',
+						default: 60000,
+						description: 'Maximum amount of time a request is allowed to take in milliseconds',
+						type: 'number',
+					},
+				],
 			},
 		],
 	};
@@ -87,22 +136,43 @@ export class OpenCode implements INodeType {
 	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<any> {
 		const credentials = await this.getCredentials('openCodeApi');
 		const modelName = this.getNodeParameter('model', itemIndex) as string;
-		const temperature = this.getNodeParameter('temperature', itemIndex) as number;
-		const maxTokens = this.getNodeParameter('maxTokens', itemIndex) as number;
+		const options = this.getNodeParameter('options', itemIndex, {}) as {
+			temperature?: number;
+			maxTokens?: number;
+			frequencyPenalty?: number;
+			presencePenalty?: number;
+			topP?: number;
+			maxRetries?: number;
+			timeout?: number;
+		};
 
 		// Dynamically import ChatOpenAI (since OpenCode uses OpenAI-compatible REST API)
-		// This prevents heavy initialization at startup
 		const { ChatOpenAI } = await import('@langchain/openai');
 
-		const model = new ChatOpenAI({
-			openAIApiKey: credentials.apiKey as string,
+		const modelConfig: any = {
+			apiKey: credentials.apiKey as string,
 			configuration: {
 				baseURL: credentials.baseUrl as string,
 			},
 			modelName: modelName,
-			temperature: temperature,
-			maxTokens: maxTokens,
-		});
+			temperature: options.temperature ?? 0.7,
+			maxTokens: options.maxTokens ?? 1024,
+			maxRetries: options.maxRetries ?? 2,
+			timeout: options.timeout ?? 60000,
+			callbacks: [new N8nLlmTracing(this)],
+		};
+
+		if (options.frequencyPenalty !== undefined) {
+			modelConfig.frequencyPenalty = options.frequencyPenalty;
+		}
+		if (options.presencePenalty !== undefined) {
+			modelConfig.presencePenalty = options.presencePenalty;
+		}
+		if (options.topP !== undefined) {
+			modelConfig.topP = options.topP;
+		}
+
+		const model = new ChatOpenAI(modelConfig);
 
 		return {
 			response: model,
