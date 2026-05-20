@@ -1,4 +1,11 @@
-import { INodeType, INodeTypeDescription, ISupplyDataFunctions } from 'n8n-workflow';
+import {
+	INodeType,
+	INodeTypeDescription,
+	ISupplyDataFunctions,
+	ILoadOptionsFunctions,
+	INodePropertyOptions,
+	IRequestOptions,
+} from 'n8n-workflow';
 
 export class OpenCode implements INodeType {
 	description: INodeTypeDescription = {
@@ -27,8 +34,11 @@ export class OpenCode implements INodeType {
 			{
 				displayName: 'Model',
 				name: 'model',
-				type: 'string',
-				default: 'opencode-default-model',
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getModels',
+				},
+				default: '',
 				description: 'The model to use for generation (e.g. gpt-4o, or specific OpenCode model ID)',
 			},
 			{
@@ -46,6 +56,32 @@ export class OpenCode implements INodeType {
 				description: 'The maximum number of tokens to generate',
 			},
 		],
+	};
+
+	methods = {
+		loadOptions: {
+			async getModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const credentials = await this.getCredentials('openCodeApi');
+				const baseUrl = (credentials.baseUrl as string)?.replace(/\/$/, '') || 'https://opencode.ai/zen/go/v1';
+
+				const options: IRequestOptions = {
+					method: 'GET',
+					uri: `${baseUrl}/models`,
+					json: true,
+				};
+
+				try {
+					const response = await this.helpers.requestWithAuthentication.call(this, 'openCodeApi', options);
+					const models = response.data || [];
+					return models.map((model: any) => ({
+						name: model.id,
+						value: model.id,
+					}));
+				} catch (error: any) {
+					throw new Error(`Failed to load models: ${error.message}`);
+				}
+			},
+		},
 	};
 
 	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<any> {
