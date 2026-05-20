@@ -1,194 +1,71 @@
-import { INodeType, INodeTypeDescription } from 'n8n-workflow';
+import { INodeType, INodeTypeDescription, ISupplyDataFunctions } from 'n8n-workflow';
 
 export class OpenCode implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'OpenCode',
+		displayName: 'OpenCode Chat Model',
 		name: 'openCode',
 		icon: 'file:opencode.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Interact with OpenCode AI models',
+		description: 'OpenCode LangChain Chat Model for Advanced AI Agents',
 		defaults: {
-			name: 'OpenCode',
+			name: 'OpenCode Chat Model',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		// This defines it as a sub-node for LangChain/Advanced AI nodes
+		codex: {
+			categories: ['ai_languageModel'],
+		},
+		inputs: [],
+		outputs: ['ai_languageModel'],
 		credentials: [
 			{
 				name: 'openCodeApi',
 				required: true,
 			},
 		],
-		requestDefaults: {
-			baseURL: '={{$credentials.baseUrl}}',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
-		},
 		properties: [
-			{
-				displayName: 'Resource',
-				name: 'resource',
-				type: 'options',
-				noDataExpression: true,
-				options: [
-					{
-						name: 'Chat',
-						value: 'chat',
-					},
-				],
-				default: 'chat',
-			},
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: {
-					show: {
-						resource: ['chat'],
-					},
-				},
-				options: [
-					{
-						name: 'Create Completion',
-						value: 'createCompletion',
-						description: 'Create a chat completion',
-						routing: {
-							request: {
-								method: 'POST',
-								url: '/chat/completions',
-							},
-						},
-						action: 'Create a completion',
-					},
-				],
-				default: 'createCompletion',
-			},
 			{
 				displayName: 'Model',
 				name: 'model',
 				type: 'string',
-				displayOptions: {
-					show: {
-						resource: ['chat'],
-						operation: ['createCompletion'],
-					},
-				},
 				default: 'opencode-default-model',
-				description: 'The model to use for completion',
-				required: true,
-				routing: {
-					send: {
-						type: 'body',
-						property: 'model',
-					},
-				},
+				description: 'The model to use for generation (e.g. gpt-4o, or specific OpenCode model ID)',
 			},
 			{
-				displayName: 'Messages',
-				name: 'messages',
-				placeholder: 'Add Message',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
-				displayOptions: {
-					show: {
-						resource: ['chat'],
-						operation: ['createCompletion'],
-					},
-				},
-				description: 'The messages to send to the model',
-				default: {},
-				options: [
-					{
-						name: 'messageValues',
-						displayName: 'Message',
-						values: [
-							{
-								displayName: 'Role',
-								name: 'role',
-								type: 'options',
-								options: [
-									{
-										name: 'System',
-										value: 'system',
-									},
-									{
-										name: 'User',
-										value: 'user',
-									},
-									{
-										name: 'Assistant',
-										value: 'assistant',
-									},
-								],
-								default: 'user',
-							},
-							{
-								displayName: 'Content',
-								name: 'content',
-								type: 'string',
-								typeOptions: {
-									rows: 4,
-								},
-								default: '',
-							},
-						],
-					},
-				],
-				routing: {
-					send: {
-						type: 'body',
-						property: 'messages',
-						value: '={{$value.messageValues}}',
-					},
-				},
+				displayName: 'Temperature',
+				name: 'temperature',
+				type: 'number',
+				default: 0.7,
+				description: 'Controls randomness. Lower values make the model more deterministic.',
 			},
 			{
-				displayName: 'Additional Fields',
-				name: 'additionalFields',
-				type: 'collection',
-				placeholder: 'Add Field',
-				default: {},
-				displayOptions: {
-					show: {
-						resource: ['chat'],
-						operation: ['createCompletion'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Temperature',
-						name: 'temperature',
-						type: 'number',
-						default: 0.7,
-						description: 'Controls randomness. Lower values make the model more deterministic.',
-						routing: {
-							send: {
-								type: 'body',
-								property: 'temperature',
-							},
-						},
-					},
-					{
-						displayName: 'Max Tokens',
-						name: 'max_tokens',
-						type: 'number',
-						default: 1024,
-						description: 'The maximum number of tokens to generate',
-						routing: {
-							send: {
-								type: 'body',
-								property: 'max_tokens',
-							},
-						},
-					},
-				],
+				displayName: 'Max Tokens',
+				name: 'maxTokens',
+				type: 'number',
+				default: 1024,
+				description: 'The maximum number of tokens to generate',
 			},
 		],
 	};
+
+	async supplyData(this: ISupplyDataFunctions, itemIndex: number): Promise<any> {
+		const credentials = await this.getCredentials('openCodeApi');
+		const modelName = this.getNodeParameter('model', itemIndex) as string;
+		const temperature = this.getNodeParameter('temperature', itemIndex) as number;
+		const maxTokens = this.getNodeParameter('maxTokens', itemIndex) as number;
+
+		// Dynamically import ChatOpenAI (since OpenCode uses OpenAI-compatible REST API)
+		// This prevents heavy initialization at startup
+		const { ChatOpenAI } = await import('@langchain/openai');
+
+		return new ChatOpenAI({
+			openAIApiKey: credentials.apiKey as string,
+			configuration: {
+				baseURL: credentials.baseUrl as string,
+			},
+			modelName: modelName,
+			temperature: temperature,
+			maxTokens: maxTokens,
+		});
+	}
 }

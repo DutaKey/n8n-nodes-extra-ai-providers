@@ -9,7 +9,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "rimraf dist && tsc && mkdir -p dist/nodes/OpenCode && cp nodes/OpenCode/*.svg dist/nodes/OpenCode/",
     "dev": "tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,6 +26,9 @@
     ]
   },
   "dependencies": {
+    "@langchain/core": "^1.1.47",
+    "@langchain/openai": "^1.4.6",
+    "@n8n/n8n-nodes-langchain": "^2.21.2",
     "n8n-core": "^2.16.1",
     "n8n-workflow": "^2.16.0"
   },

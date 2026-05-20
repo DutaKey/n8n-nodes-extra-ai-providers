@@ -8,7 +8,7 @@ import {
 export class OpenCodeApi implements ICredentialType {
 	name = 'openCodeApi';
 	displayName = 'OpenCode API';
-	documentationUrl = 'https://opencode.example.com/docs'; // Placeholder
+	documentationUrl = 'https://opencode.ai';
 	properties: INodeProperties[] = [
 		{
 			displayName: 'API Key',
@@ -22,8 +22,8 @@ export class OpenCodeApi implements ICredentialType {
 			displayName: 'Base URL',
 			name: 'baseUrl',
 			type: 'string',
-			default: 'https://api.opencode.example.com/v1',
-			description: 'The base URL for the OpenCode API. Leave default unless you are using a proxy or specific endpoint.',
+			default: 'https://opencode.ai/zen/go/v1',
+			description: 'The base URL for the OpenCode API. Change this if you are using a different plan.',
 			required: true,
 		},
 	];
@@ -40,7 +40,7 @@ export class OpenCodeApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: '={{$credentials.baseUrl}}',
-			url: '/models', // Assuming a standard /models endpoint for testing
+			url: '/models',
 		},
 	};
 }
