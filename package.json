@@ -28,17 +28,18 @@
       "dist/nodes/NineRouter/NineRouter.node.js"
     ]
   },
-  "dependencies": {
-    "@langchain/core": "^1.1.47",
-    "@langchain/openai": "^1.4.6"
-  },
+  "dependencies": {},
   "peerDependencies": {
+    "@langchain/core": "^1.1.47",
+    "@langchain/openai": "^1.4.6",
     "@n8n/ai-utilities": "^0.15.0",
     "@n8n/n8n-nodes-langchain": "^2.21.2",
     "n8n-core": "^2.16.1",
     "n8n-workflow": "^2.16.0"
   },
   "devDependencies": {
+    "@langchain/core": "^1.1.47",
+    "@langchain/openai": "^1.4.6",
     "@n8n/ai-utilities": "^0.15.0",
     "@n8n/n8n-nodes-langchain": "^2.21.2",
     "@types/node": "^25.9.1",
