@@ -9,7 +9,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf dist && tsc && mkdir -p dist/nodes/OpenCode dist/nodes/NineRouter && cp nodes/OpenCode/*.svg dist/nodes/OpenCode/ && cp nodes/NineRouter/*.svg dist/nodes/NineRouter/",
+    "build": "rimraf dist && tsc && node scripts/copy-assets.js",
     "dev": "tsc -w",
     "link-local": "node scripts/link-local.js",
     "test": "echo \"Error: no test specified\" && exit 1"
