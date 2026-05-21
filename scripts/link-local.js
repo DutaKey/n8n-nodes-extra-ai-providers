@@ -34,10 +34,18 @@ if (!fs.existsSync(targetPackageJson)) {
 // 4. Install the package locally
 console.log(`- Installing package to custom nodes directory...`);
 try {
-	execSync(`npm install "${packageRoot}"`, {
+	const targetPackageDir = path.join(customNodesDir, 'node_modules', 'n8n-nodes-extra-ai-providers');
+	if (fs.existsSync(targetPackageDir)) {
+		console.log(`- Cleaning up existing installation at ${targetPackageDir}...`);
+		fs.rmSync(targetPackageDir, { recursive: true, force: true });
+	}
+
+	console.log(`- Installing package using --omit=peer...`);
+	execSync(`npm install --omit=peer "${packageRoot}"`, {
 		cwd: customNodesDir,
 		stdio: 'inherit',
 	});
+
 	console.log('\n✅ Successfully installed and linked custom nodes package!');
 	console.log('\n💡 To run n8n with these nodes:');
 	console.log('  1. Ensure you have run "npm run build" in the package directory to build the TypeScript files.');
