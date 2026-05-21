@@ -9,7 +9,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf dist && tsc && mkdir -p dist/nodes/OpenCode && cp nodes/OpenCode/*.svg dist/nodes/OpenCode/",
+    "build": "rimraf dist && tsc && mkdir -p dist/nodes/OpenCode dist/nodes/NineRouter && cp nodes/OpenCode/*.svg dist/nodes/OpenCode/ && cp nodes/NineRouter/*.svg dist/nodes/NineRouter/",
     "dev": "tsc -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,10 +19,12 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/OpenCodeApi.credentials.js"
+      "dist/credentials/OpenCodeApi.credentials.js",
+      "dist/credentials/NineRouterApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/OpenCode/OpenCode.node.js"
+      "dist/nodes/OpenCode/OpenCode.node.js",
+      "dist/nodes/NineRouter/NineRouter.node.js"
     ]
   },
   "dependencies": {
